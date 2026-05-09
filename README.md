@@ -1,9 +1,15 @@
 # Observe CX App
 
-A new Flutter project. To build `APK`:
+A new Flutter project. To build `APK` with OpenTelemetry settings:
 
 ```
-flutter clean; flutter build apk --release
+flutter clean; flutter build apk --release `
+  --dart-define=OTEL_SERVICE_NAME="observe-cx" `
+  --dart-define=OTEL_EXPORTER_OTLP_ENDPOINT="http://<endpoint>>:4317" `
+  --dart-define=OTEL_EXPORTER_OTLP_HEADERS="Authorization: <TOKEN>" `
+  --dart-define=OTEL_EXPORTER_OTLP_SECURE="false" `
+  --dart-define=OTEL_RESOURCE_ATTRIBUTES="service.instance.id=android,service.version=0.0.1,deployment.environment.name=dev"
+
 ```
 Once built, the `APK` file can be found here:
 ```

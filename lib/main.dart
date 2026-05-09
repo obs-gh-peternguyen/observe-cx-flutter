@@ -1,11 +1,46 @@
 import 'package:english_words/english_words.dart';
-import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter/gestures.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
-void main() {
-    runApp(MyApp());
+// OpenTelemetry Imports
+import 'dart:ui';
+import 'package:flutter/material.dart';
+import 'package:flutterrific_opentelemetry/flutterrific_opentelemetry.dart';
+
+late final String appVersion;
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  final packageInfo = await PackageInfo.fromPlatform();
+  appVersion = packageInfo.version;
+
+  FlutterError.onError = (FlutterErrorDetails details) {
+    FlutterOTel.reportError(
+        'FlutterError.onError', details.exception, details.stack);
+  };
+
+  PlatformDispatcher.instance.onError = (error, stack) {
+    FlutterOTel.reportError('PlatformError', error, stack);
+    return true;
+  };
+
+  // Initialize OpenTelemetry Settings
+  await FlutterOTel.initialize(
+    serviceName: const String.fromEnvironment(
+        'OTEL_SERVICE_NAME',
+        defaultValue: 'observe-cx'),
+    serviceVersion: appVersion,
+    endpoint: const String.fromEnvironment(
+        'OTEL_EXPORTER_OTLP_ENDPOINT',
+        defaultValue: 'http://10.0.2.2:4317'), // This address is for a localhost collector
+    secure: const bool.fromEnvironment('OTEL_EXPORTER_OTLP_SECURE',
+        defaultValue: false),
+  );
+
+  runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
@@ -17,6 +52,7 @@ class MyApp extends StatelessWidget {
       create: (context) => MyAppState(),
       child: MaterialApp(
         title: 'Observe CX App',
+        navigatorObservers: [FlutterOTel.routeObserver], // Add OpenTelemetry Auto-Instrumentation
         theme: ThemeData(
           useMaterial3: true,
           colorScheme: ColorScheme.fromSeed(seedColor: Colors.red),
@@ -327,7 +363,7 @@ class AboutPage extends StatelessWidget {
                       fontWeight: FontWeight.bold, fontStyle: FontStyle.italic),
                 ),
                 TextSpan(
-                  text: ' v0.0.3',
+                  text: ' v$appVersion',
                 ),
               ],
             ),
