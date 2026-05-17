@@ -1,14 +1,16 @@
 # Observe CX App
 
-A new Flutter project. To build `APK` with OpenTelemetry settings:
+## Android
+A new Flutter project. 
+
+To build `APK` with OpenTelemetry settings:
 
 ```
 flutter clean; flutter build apk --release `
   --dart-define=OTEL_SERVICE_NAME="observe-cx" `
-  --dart-define=OTEL_EXPORTER_OTLP_ENDPOINT="http://<endpoint>>:4317" `
-  --dart-define=OTEL_EXPORTER_OTLP_HEADERS="Authorization: <TOKEN>" `
+  --dart-define=OTEL_EXPORTER_OTLP_ENDPOINT="<endpoint>>:4317" `
   --dart-define=OTEL_EXPORTER_OTLP_SECURE="false" `
-  --dart-define=OTEL_RESOURCE_ATTRIBUTES="service.instance.id=android,service.version=0.0.1,deployment.environment.name=dev"
+  --dart-define=OTEL_RESOURCE_ATTRIBUTES="service.instance.id=android,service.version=0.0.4,deployment.environment.name=dev"
 
 ```
 Once built, the `APK` file can be found here:
@@ -24,11 +26,23 @@ Once built, the `APK` file can be found here:
 5. Run the emulator to make sure it works, but don't close it yet
 6. Run `flutter devices` to make sure you see the Android emulator. 
 7. Proceed to run `flutter run` to make sure you see the app.
-8. Add this to your `PATH`: `~/Libarary/Android/sdk/emulator`
+8. Add this to your `PATH`: `~\AppData\Local\Android\Sdk\emulator` (Windows) or `~/Libarary/Android/sdk/emulator` (Mac)
 9. Run this: `emulator -list_avds` it should return the name of your emulator.
-10. Run the emulator without Android Studio with `emulator -avd Resizable_Experimental`
+10. Run the emulator without Android Studio with `emulator -avd Resizable_Experimental` (or whatever you named it)
 11. Finally, do `flutter run` to see the app load in the emulator.
 
+## Windows
+Requires Visual Studio and the "Desktop Development with C++" option. To build `EXE` with OpenTelemetry settings:
+
+```
+flutter clean; flutter build windows --release `
+  --dart-define=OTEL_SERVICE_NAME="observe-cx.windows" `
+  --dart-define=OTEL_EXPORTER_OTLP_ENDPOINT="<endpoint>:4317" `
+  --dart-define=OTEL_EXPORTER_OTLP_SECURE="true" `
+  --dart-define=OTEL_RESOURCE_ATTRIBUTES="service.instance.id=windows,service.version=0.0.4,deployment.environment.name=desktop"
+```
+
+Note: Requires `DLL` files and `data` folder to launch `EXE`.
 
 ## Getting Started
 
