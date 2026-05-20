@@ -1,13 +1,11 @@
-import 'package:english_words/english_words.dart';
-import 'package:provider/provider.dart';
-import 'package:flutter/gestures.dart';
-import 'package:url_launcher/url_launcher.dart';
-import 'package:package_info_plus/package_info_plus.dart';
-
-// OpenTelemetry Imports
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutterrific_opentelemetry/flutterrific_opentelemetry.dart';
+import 'package:package_info_plus/package_info_plus.dart';
+
+import 'pages/home_page.dart';
+import 'pages/opal_page.dart';
+import 'pages/links_page.dart';
 
 late final String appVersion;
 
@@ -27,20 +25,17 @@ void main() async {
     return true;
   };
 
-  // Initialize OpenTelemetry Settings
   await FlutterOTel.initialize(
-    serviceName: const String.fromEnvironment(
-        'OTEL_SERVICE_NAME',
+    serviceName: const String.fromEnvironment('OTEL_SERVICE_NAME',
         defaultValue: 'observe-cx'),
     serviceVersion: appVersion,
-    endpoint: const String.fromEnvironment(
-        'OTEL_EXPORTER_OTLP_ENDPOINT',
-        defaultValue: 'http://10.0.2.2:4317'), // This address is for a localhost collector
+    endpoint: const String.fromEnvironment('OTEL_EXPORTER_OTLP_ENDPOINT',
+        defaultValue: 'http://10.0.2.2:4317'),
     secure: const bool.fromEnvironment('OTEL_EXPORTER_OTLP_SECURE',
         defaultValue: false),
   );
 
-  runApp(MyApp());
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
@@ -48,410 +43,119 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (context) => MyAppState(),
-      child: MaterialApp(
-        title: 'Observe CX App',
-        navigatorObservers: [FlutterOTel.routeObserver], // Add OpenTelemetry Auto-Instrumentation
-        theme: ThemeData(
-          useMaterial3: true,
-          colorScheme: ColorScheme.fromSeed(seedColor: Colors.red),
+    return MaterialApp(
+      title: 'Observe CX',
+      navigatorObservers: [FlutterOTel.routeObserver],
+      theme: ThemeData(
+        useMaterial3: true,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color(0xFF6C5CE7),
+          brightness: Brightness.light,
         ),
-        home: MyHomePage(),
       ),
+      darkTheme: ThemeData(
+        useMaterial3: true,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color(0xFF6C5CE7),
+          brightness: Brightness.dark,
+        ),
+      ),
+      home: const MainScaffold(),
     );
   }
 }
 
-class MyAppState extends ChangeNotifier {
-  var current = WordPair.random();
-  var history = <WordPair>[];
+class MainScaffold extends StatefulWidget {
+  const MainScaffold({super.key});
 
-  GlobalKey? historyListKey;
-
-  void getNext() {
-    history.insert(0, current);
-    var animatedList = historyListKey?.currentState as AnimatedListState?;
-    animatedList?.insertItem(0);
-    current = WordPair.random();
-    notifyListeners();
-  }
-
-  var favorites = <WordPair>[];
-
-  void toggleFavorite([WordPair? pair]) {
-    pair = pair ?? current;
-    if (favorites.contains(pair)) {
-      favorites.remove(pair);
-    } else {
-      favorites.add(pair);
-    }
-    notifyListeners();
-  }
-
-  void removeFavorite(WordPair pair) {
-    favorites.remove(pair);
-    notifyListeners();
-  }
-}
-
-class MyHomePage extends StatefulWidget {
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  State<MainScaffold> createState() => _MainScaffoldState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
+class _MainScaffoldState extends State<MainScaffold> {
   var selectedIndex = 0;
 
   @override
   Widget build(BuildContext context) {
-    var colorScheme = Theme.of(context).colorScheme;
-
     Widget page;
     switch (selectedIndex) {
       case 0:
-        page = GeneratorPage();
+        page = const HomePage();
       case 1:
-        page = FavoritesPage();
+        page = const OpalPage();
       case 2:
-        page = AboutPage();
+        page = const LinksPage();
       default:
         throw UnimplementedError('no widget for $selectedIndex');
     }
 
-    // The container for the current page, with its background color
-    // and subtle switching animation.
-    var mainArea = ColoredBox(
-      color: colorScheme.surfaceContainerHighest,
-      child: AnimatedSwitcher(
-        duration: Duration(milliseconds: 200),
-        child: page,
-      ),
-    );
-
-    return Scaffold(
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          if (constraints.maxWidth < 450) {
-            // Use a more mobile-friendly layout with BottomNavigationBar
-            // on narrow screens.
-            return Column(
-              children: [
-                Expanded(child: mainArea),
-                SafeArea(
-                  child: BottomNavigationBar(
-                    items: [
-                      BottomNavigationBarItem(
-                        icon: Icon(Icons.home),
-                        label: 'Home',
-                      ),
-                      BottomNavigationBarItem(
-                        icon: Icon(Icons.favorite),
-                        label: 'Favorites',
-                      ),
-                      BottomNavigationBarItem(
-                        icon: Icon(Icons.question_mark),
-                        label: 'About',
-                      ),
-                    ],
-                    currentIndex: selectedIndex,
-                    onTap: (value) {
-                      setState(() {
-                        selectedIndex = value;
-                      });
-                    },
-                  ),
-                )
-              ],
-            );
-          } else {
-            return Row(
-              children: [
-                SafeArea(
-                  child: NavigationRail(
-                    extended: constraints.maxWidth >= 600,
-                    destinations: [
-                      NavigationRailDestination(
-                        icon: Icon(Icons.home),
-                        label: Text('Home'),
-                      ),
-                      NavigationRailDestination(
-                        icon: Icon(Icons.favorite),
-                        label: Text('Favorites'),
-                      ),
-                      NavigationRailDestination(
-                        icon: Icon(Icons.question_mark),
-                        label: Text('About'),
-                      ),
-                    ],
-                    selectedIndex: selectedIndex,
-                    onDestinationSelected: (value) {
-                      setState(() {
-                        selectedIndex = value;
-                      });
-                    },
-                  ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth < 600) {
+          return Scaffold(
+            body: page,
+            bottomNavigationBar: NavigationBar(
+              selectedIndex: selectedIndex,
+              onDestinationSelected: (value) {
+                setState(() {
+                  selectedIndex = value;
+                });
+              },
+              destinations: const [
+                NavigationDestination(
+                  icon: Icon(Icons.home_outlined),
+                  selectedIcon: Icon(Icons.home),
+                  label: 'Home',
                 ),
-                Expanded(child: mainArea),
-              ],
-            );
-          }
-        },
-      ),
-    );
-  }
-}
-
-class GeneratorPage extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    var appState = context.watch<MyAppState>();
-    var pair = appState.current;
-
-    IconData icon;
-    if (appState.favorites.contains(pair)) {
-      icon = Icons.favorite;
-    } else {
-      icon = Icons.favorite_border;
-    }
-
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Expanded(
-            flex: 3,
-            child: HistoryListView(),
-          ),
-          SizedBox(height: 10),
-          BigCard(pair: pair),
-          SizedBox(height: 10),
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ElevatedButton.icon(
-                onPressed: () {
-                  appState.toggleFavorite();
-                },
-                icon: Icon(icon),
-                label: Text('Like'),
-              ),
-              SizedBox(width: 10),
-              ElevatedButton(
-                onPressed: () {
-                  appState.getNext();
-                },
-                child: Text('Next'),
-              ),
-            ],
-          ),
-          Spacer(flex: 2),
-        ],
-      ),
-    );
-  }
-}
-
-class BigCard extends StatelessWidget {
-  const BigCard({
-    super.key,
-    required this.pair,
-  });
-
-  final WordPair pair;
-
-  @override
-  Widget build(BuildContext context) {
-    var theme = Theme.of(context);
-    var style = theme.textTheme.displayMedium!.copyWith(
-      color: theme.colorScheme.onPrimary,
-    );
-
-    return Card(
-      color: theme.colorScheme.primary,
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: AnimatedSize(
-          duration: Duration(milliseconds: 200),
-          // Make sure that the compound word wraps correctly when the window
-          // is too narrow.
-          child: MergeSemantics(
-            child: Wrap(
-              children: [
-                Text(
-                  pair.first,
-                  style: style.copyWith(fontWeight: FontWeight.w200),
+                NavigationDestination(
+                  icon: Icon(Icons.code_outlined),
+                  selectedIcon: Icon(Icons.code),
+                  label: 'OPAL',
                 ),
-                Text(
-                  pair.second,
-                  style: style.copyWith(fontWeight: FontWeight.bold),
-                )
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class FavoritesPage extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    var theme = Theme.of(context);
-    var appState = context.watch<MyAppState>();
-
-    if (appState.favorites.isEmpty) {
-      return Center(
-        child: Text('No favorites yet.'),
-      );
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(30, 90, 0, 0),
-          child: Text('You have '
-              '${appState.favorites.length} favorites:'),
-        ),
-        Expanded(
-          // Make better use of wide windows with a grid.
-          child: GridView(
-            gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-              maxCrossAxisExtent: 400,
-              childAspectRatio: 400 / 80,
-            ),
-            children: [
-              for (var pair in appState.favorites)
-                ListTile(
-                  leading: IconButton(
-                    icon: Icon(Icons.delete_outline, semanticLabel: 'Delete'),
-                    color: theme.colorScheme.primary,
-                    onPressed: () {
-                      appState.removeFavorite(pair);
-                    },
-                  ),
-                  title: Text(
-                    pair.asLowerCase,
-                    semanticsLabel: pair.asPascalCase,
-                  ),
-                ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class AboutPage extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          RichText(
-            textAlign: TextAlign.center,
-            text: TextSpan(
-              style: DefaultTextStyle.of(context).style,
-              children: <TextSpan>[
-                TextSpan(
-                  text: 'Observe CX App',
-                  style: TextStyle(
-                      fontWeight: FontWeight.bold, fontStyle: FontStyle.italic),
-                ),
-                TextSpan(
-                  text: ' v$appVersion',
+                NavigationDestination(
+                  icon: Icon(Icons.link_outlined),
+                  selectedIcon: Icon(Icons.link),
+                  label: 'Links',
                 ),
               ],
-            ),
-          ),
-          RichText(
-            textAlign: TextAlign.center,
-            text: TextSpan(
-              style: DefaultTextStyle.of(context).style,
-              children: <TextSpan>[
-                TextSpan(
-                  text: 'Streamlit App: ',
-                ),
-                TextSpan(
-                  text: 'https://observe-faqs.streamlit.app',
-                  style: TextStyle(color: Colors.blue),
-                  recognizer: TapGestureRecognizer()
-                    ..onTap = () {
-                      launchUrl(
-                          Uri.parse('https://observe-faqs.streamlit.app'));
-                    },
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class HistoryListView extends StatefulWidget {
-  const HistoryListView({super.key});
-
-  @override
-  State<HistoryListView> createState() => _HistoryListViewState();
-}
-
-class _HistoryListViewState extends State<HistoryListView> {
-  /// Needed so that [MyAppState] can tell [AnimatedList] below to animate
-  /// new items.
-  final _key = GlobalKey();
-
-  /// Used to "fade out" the history items at the top, to suggest continuation.
-  static const Gradient _maskingGradient = LinearGradient(
-    // This gradient goes from fully transparent to fully opaque black...
-    colors: [Colors.transparent, Colors.black],
-    // ... from the top (transparent) to half (0.5) of the way to the bottom.
-    stops: [0.0, 0.5],
-    begin: Alignment.topCenter,
-    end: Alignment.bottomCenter,
-  );
-
-  @override
-  Widget build(BuildContext context) {
-    final appState = context.watch<MyAppState>();
-    appState.historyListKey = _key;
-
-    return ShaderMask(
-      shaderCallback: (bounds) => _maskingGradient.createShader(bounds),
-      // This blend mode takes the opacity of the shader (i.e. our gradient)
-      // and applies it to the destination (i.e. our animated list).
-      blendMode: BlendMode.dstIn,
-      child: AnimatedList(
-        key: _key,
-        reverse: true,
-        padding: EdgeInsets.only(top: 100),
-        initialItemCount: appState.history.length,
-        itemBuilder: (context, index, animation) {
-          final pair = appState.history[index];
-          return SizeTransition(
-            sizeFactor: animation,
-            child: Center(
-              child: TextButton.icon(
-                onPressed: () {
-                  appState.toggleFavorite(pair);
-                },
-                icon: appState.favorites.contains(pair)
-                    ? Icon(Icons.favorite, size: 12)
-                    : SizedBox(),
-                label: Text(
-                  pair.asLowerCase,
-                  semanticsLabel: pair.asPascalCase,
-                ),
-              ),
             ),
           );
-        },
-      ),
+        } else {
+          return Scaffold(
+            body: Row(
+              children: [
+                NavigationRail(
+                  extended: constraints.maxWidth >= 800,
+                  selectedIndex: selectedIndex,
+                  onDestinationSelected: (value) {
+                    setState(() {
+                      selectedIndex = value;
+                    });
+                  },
+                  destinations: const [
+                    NavigationRailDestination(
+                      icon: Icon(Icons.home_outlined),
+                      selectedIcon: Icon(Icons.home),
+                      label: Text('Home'),
+                    ),
+                    NavigationRailDestination(
+                      icon: Icon(Icons.code_outlined),
+                      selectedIcon: Icon(Icons.code),
+                      label: Text('OPAL'),
+                    ),
+                    NavigationRailDestination(
+                      icon: Icon(Icons.link_outlined),
+                      selectedIcon: Icon(Icons.link),
+                      label: Text('Links'),
+                    ),
+                  ],
+                ),
+                Expanded(child: page),
+              ],
+            ),
+          );
+        }
+      },
     );
   }
 }
