@@ -9,18 +9,21 @@ class LinksPage extends StatelessWidget {
   Widget build(BuildContext context) {
     var theme = Theme.of(context);
 
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        Text(
-          'Useful Links',
-          style: theme.textTheme.headlineSmall?.copyWith(
-            fontWeight: FontWeight.bold,
+    return SafeArea(
+      bottom: false,
+      child: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          Text(
+            'Useful Links',
+            style: theme.textTheme.headlineSmall?.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
           ),
-        ),
-        const SizedBox(height: 16),
-        ...usefulLinks.map((link) => _LinkTile(link: link)),
-      ],
+          const SizedBox(height: 16),
+          ...usefulLinks.map((link) => _LinkTile(link: link)),
+        ],
+      ),
     );
   }
 }

@@ -5,6 +5,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 
 import 'pages/home_page.dart';
 import 'pages/opal_page.dart';
+import 'pages/videos_page.dart';
 import 'pages/links_page.dart';
 
 late final String appVersion;
@@ -84,6 +85,8 @@ class _MainScaffoldState extends State<MainScaffold> {
       case 1:
         page = const OpalPage();
       case 2:
+        page = const VideosPage();
+      case 3:
         page = const LinksPage();
       default:
         throw UnimplementedError('no widget for $selectedIndex');
@@ -111,6 +114,11 @@ class _MainScaffoldState extends State<MainScaffold> {
                   icon: Icon(Icons.code_outlined),
                   selectedIcon: Icon(Icons.code),
                   label: 'OPAL',
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.play_circle_outline),
+                  selectedIcon: Icon(Icons.play_circle),
+                  label: 'Videos',
                 ),
                 NavigationDestination(
                   icon: Icon(Icons.link_outlined),
@@ -142,6 +150,11 @@ class _MainScaffoldState extends State<MainScaffold> {
                       icon: Icon(Icons.code_outlined),
                       selectedIcon: Icon(Icons.code),
                       label: Text('OPAL'),
+                    ),
+                    NavigationRailDestination(
+                      icon: Icon(Icons.play_circle_outline),
+                      selectedIcon: Icon(Icons.play_circle),
+                      label: Text('Videos'),
                     ),
                     NavigationRailDestination(
                       icon: Icon(Icons.link_outlined),
