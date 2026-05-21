@@ -8,7 +8,7 @@ To build `APK` with OpenTelemetry settings:
 ```
 flutter clean; flutter build apk --release `
   --dart-define=OTEL_SERVICE_NAME="observe-cx" `
-  --dart-define=OTEL_EXPORTER_OTLP_ENDPOINT="<endpoint>>:4317" `
+  --dart-define=OTEL_EXPORTER_OTLP_ENDPOINT="<endpoint>:4317" `
   --dart-define=OTEL_EXPORTER_OTLP_SECURE="false" `
   --dart-define=OTEL_RESOURCE_ATTRIBUTES="service.instance.id=android,service.version=0.0.5,deployment.environment.name=dev"
 
@@ -43,6 +43,16 @@ flutter clean; flutter build windows --release `
 ```
 
 Note: Requires `DLL` files and `data` folder to launch `EXE`.
+
+## Linux
+To build a Linux binary:s
+```
+flutter build linux --release \
+  --dart-define=OTEL_SERVICE_NAME="observe-cx.linux" \
+  --dart-define=OTEL_EXPORTER_OTLP_ENDPOINT="<endpoint>:4317" \
+  --dart-define=OTEL_EXPORTER_OTLP_SECURE="true" \
+  --dart-define=OTEL_RESOURCE_ATTRIBUTES="service.instance.id=linux,service.version=0.0.5,deployment.environment.name=dev"
+```
 
 ## Getting Started
 
